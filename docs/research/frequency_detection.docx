@@ -1,0 +1,15 @@
+﻿Research Log: Frequency detection
+Yoshin Govender
+
+10/26/2018
+	I’ve been spending a while trying to figure out the best way to implement pitch detection for this project. Against my initial assumption, dedicated chips for this purpose aren’t actually a thing, and the detection algorithm needs to be implemented on the micro-controller itself. My initial thought was to use a Fast Fourier Transform, which is what is typically used for discrete-time audio analysis, however, this would have added a lot of overhead while still not giving the kind of streamlined results we needed. When I began doing more research on the topic, I found that the way most people performed frequency detection on microcontrollers was done by counting zero crossings, so I planned on using an analog system to filter and clean the audio as much as possible, and then detect frequency by using that technique. However, I realized soon that this process only works for “pure signals” like sine and square waves, but falls apart when harmonics are introduced. What I needed was a way to hone in on the fundamental frequency and use that for my reading. After some digging, I found a blog post (http://www.akellyirl.com/reliable-frequency-detection-using-dsp-techniques/) that introduced a different algorithm called Autocorrelation. Rather than count the frequency of “events” like other algorithms, this technique measures the similarity between the signal and its delayed copy. In essence, the difference between the maximum peak at t0 and the first peak at t1 will be equal to the fundamental period, which can be used to derive the fundamental frequency. 
+
+	The best part of this technique is that it is very, very simple. It’s basically just the sum of the product between two samples. The algorithm itself (minus some necessary peak detection) fits into only a few lines of C++ code: 
+
+for(i=0; i < len; i++)
+  {
+    sum = 0;
+    for(k=0; k < len-i; k++) sum += (rawData[k]-128)*(rawData[k+i]-128)/256;
+  }
+The example that they give demonstrates detection on an Arduino, but it won’t be difficult to implement on the 32-bit controller that we are using. In fact, it will likely work much better since our controller has a 12-bit ADC and runs at a much higher frequency.
+
