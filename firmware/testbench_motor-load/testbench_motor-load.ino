@@ -1,4 +1,6 @@
+#include <TimerThree.h>
 #include <AccelStepper.h>
+#include <LiquidCrystal.h>
 #include "HX711.h"
 
 //Load Cell
@@ -7,6 +9,9 @@
 HX711 scale(DOUT, CLK);
 float calibration_factor = -7050;
 float tension;
+
+//LCD Screen
+LiquidCrystal lcd(53, 51, 49, 47, 45, 43);
 
 //Stepper Motor
 AccelStepper stepper; // Defaults to AccelStepper::FULL4WIRE (4 pins) on 2, 3, 4, 5
@@ -18,11 +23,21 @@ boolean stringComplete = false;
 void setup() {
   Serial.begin(9600);
   inputString.reserve(200); // reserving 200 bytes for the input string
+
+  //Attach display ISR to Timer 3 compare interrupt
+  Timer3.initialize(150000);
+  Timer3.attachInterrupt(updateDisplay);
+
+  //Initialize the LCD Display
+  lcd.begin(16, 2);
+  lcd.print("Tension (lbs)");
+  
   scale.set_scale(calibration_factor);
   //scale.tare(); //Assuming there is no weight on the scale
+
+  //Initialize Stepper Motor
   stepper.setMaxSpeed(200.0);
   stepper.setAcceleration(100.0);
-
   stepper.runToNewPosition(0);
 }
 
@@ -62,3 +77,9 @@ void serialEvent() {
     }
   }
 }
+
+void updateDisplay() {
+  lcd.setCursor(0, 1);
+  lcd.print(tension,5);
+}
+
