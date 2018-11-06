@@ -16,10 +16,11 @@ void setup() {
   load();
   scaleSetup();
   motorSetup();
+  lcdSetup();
 }
 
 void loop() {
-  getWeight();
+  getTension();
   cmd();
 }
 

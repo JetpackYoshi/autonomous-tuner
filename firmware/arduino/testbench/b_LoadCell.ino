@@ -30,7 +30,7 @@ void scaleSetup(){
   scale.tare();
 }
 
-void getWeight(){
-  tension = scale.get_units();
+void getTension(){
+  tension = scale.get_units(5);
 }
 
