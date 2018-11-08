@@ -1,0 +1,3 @@
+[submodule "firmware/ExternalLibraries/HX711"]
+	path = firmware/ExternalLibraries/HX711
+	url = https://github.com/bogde/HX711.git
