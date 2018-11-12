@@ -11,7 +11,7 @@ String inputString = "";
 boolean stringComplete = false;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(38400);
   inputString.reserve(200); // reserving 200 bytes for the input string
   load();
   scaleSetup();
