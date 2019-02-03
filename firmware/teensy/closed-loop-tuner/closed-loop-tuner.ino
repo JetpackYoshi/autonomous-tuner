@@ -2,7 +2,6 @@
 #include <SPI.h>
 #include <Wire.h>
 
-#define ANALOG_IN 0
 #define kSerialSpeed 115200
 
 float note;
@@ -17,5 +16,5 @@ void setup() {
 }
 
 void loop() {
-  detectPitch();
+  performPolledRoutines();
 }

@@ -6,6 +6,7 @@ float stepperSpeed;
 void motorSetup(){
   stepper.setMaxSpeed(50);
 }
+
 void runStepper(){
   stepper.setSpeed(stepperSpeed);
   stepper.runSpeed();
