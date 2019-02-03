@@ -19,12 +19,17 @@ void detectPitch(){
     lastSampleTime = millis();
     note = notefreq1.read();
     prob = notefreq1.probability();
-    Serial.printf("Note: %3.2f | Probability: %.2f\n", note, prob);
-    stepperSpeed = map(note, NOTE_A4-5, NOTE_A4+5, -50, 50);
+    //Serial.printf("Note: %3.2f | Probability: %.2f\n", note, prob);
+
+    
+    if (note>400 && note <500){
+      Serial.printf("%3.2f\n", note);
+      stepperSpeed = map(note, NOTE_A4-3, NOTE_A4+3, -300, 300);
+    }
     interrupts();
   }
 
-  if ((millis()-lastSampleTime) > 500){
+  if ((millis()-lastSampleTime) > 250){
    stepperSpeed = 0;
   }
 }

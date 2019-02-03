@@ -8,12 +8,15 @@
 float note;
 float prob;
 
+bool RUN = true;
+
 void setup() {
   audioSetup();
   motorSetup();
   scheduleRoutines();
   
   Serial.begin(kSerialSpeed);
+  Serial.println("Begin Tuning A");
 }
 
 void loop() {
