@@ -2,11 +2,11 @@
 #include <PID_v1.h>
 
 #define Freq_Ts 100
-#define pwmPin 10
+#define pwmPin 37
 #define dirPin1 2
 #define dirPin2 3
-#define encA 9
-#define encB 10
+#define encA 6
+#define encB 7
 
 double Setpoint, Input, Output;
 double p_Kp=2, p_Ki=5, p_Kd=1;
@@ -75,8 +75,3 @@ void motorCalc(){
   analogWrite(pwmPin,abs(Output));
   
 }
-
-
-
-
-

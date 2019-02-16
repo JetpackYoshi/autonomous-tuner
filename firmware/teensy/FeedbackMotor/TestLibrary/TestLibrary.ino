@@ -3,10 +3,10 @@
 
 #define Freq_Ts 100 //Calculation period in microseconds
 
-#define pwmPin = 10;
-#define dirPin = 3;
-#define encA = 9;
-#define encB = 10;
+#define pwmPin 37
+#define dirPin 3
+#define encA 6
+#define encB 7
 
 double Setpoint, Input, Output;
 int Kp = 1;
@@ -31,6 +31,7 @@ void setKp(int kp){
 
 void motorSetup(){
   Output = 0;
+  Setpoint = 2000;
   pinMode(pwmPin, OUTPUT); 
   pinMode(dirPin, OUTPUT);
 }
@@ -40,7 +41,7 @@ void motorStep(){
   velocity = (newPosition - oldPosition) / (Freq_Ts*0.000001);
   if (newPosition != oldPosition) {
     oldPosition = newPosition;
-    //Serial.println(newPosition);
+    Serial.println(newPosition);
     //Serial.println(newPosition);
   }
   Input = newPosition;
@@ -59,12 +60,12 @@ void motorStep(){
   if (error < 0) {
   digitalWrite(3, LOW);//backward if high
       digitalWrite(2, HIGH);//forward if high
-      Serial.println("FW");
+      //Serial.println("FW");
   }  
   if (error > 0) {
   digitalWrite(3, HIGH);//backward if high
       digitalWrite(2, LOW);//forward if high
-      Serial.println("BK");
+      //Serial.println("BK");
   }  
   lastError = error;
   sumError += error; 
@@ -73,6 +74,3 @@ void motorStep(){
   Output = abs(Output);
   analogWrite(10,Output);
 }
-
-
-

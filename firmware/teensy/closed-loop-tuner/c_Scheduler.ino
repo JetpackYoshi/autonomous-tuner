@@ -15,11 +15,10 @@ void scheduleRoutines(){
 }
 
 void performPolledRoutines(){
-  if ((lcdMetro.check() == 1) && LCD_REFRESH_TOGGLE){
-    null; //do stuff
-  }
+//  if ((lcdMetro.check() == 1) && LCD_REFRESH_TOGGLE){
+//    null; //do stuff
+//  }
   if (PITCH_DETECT_TOGGLE){
     detectPitch();
   }
 }
-

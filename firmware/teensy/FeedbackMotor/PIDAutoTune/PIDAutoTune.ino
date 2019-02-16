@@ -2,15 +2,15 @@
 #include <PID_AutoTune_v0.h>
 #include <Encoder.h>
 
-#define pwmPin 10
-#define dirPin1 2
-#define dirPin2 3
-#define encA 9
-#define encB 10
+#define pwmPin 37
+#define dirPin1 38
+#define dirPin2 39
+#define encA 6
+#define encB 7
 
 byte ATuneModeRemember=2;
 double input=80, output=50, setpoint=180;
-double kp=2,ki=0.5,kd=2;
+double kp=0.5,ki=0,kd=0;
 
 double kpmodel=1.5, taup=100, theta[50];
 double outputStart=5;
@@ -28,7 +28,7 @@ PID myPID(&input, &output, &setpoint,kp,ki,kd, DIRECT);
 PID_ATune aTune(&input, &output);
 
 //set to false to connect to the real world
-boolean useSimulation = true;
+boolean useSimulation = false;
 
 void setup()
 {
@@ -42,6 +42,7 @@ void setup()
   }
   //Setup the pid 
   myPID.SetMode(AUTOMATIC);
+  myPID.SetOutputLimits(-255, 255);
 
   if(tuning)
   {
@@ -51,6 +52,10 @@ void setup()
   }
   
   serialTime = 0;
+  analogWriteResolution(8);
+  pinMode(9,OUTPUT);
+  pinMode(dirPin1,OUTPUT);
+  pinMode(dirPin2,OUTPUT);
   Serial.begin(9600);
 
 }
@@ -63,8 +68,9 @@ void loop()
   if(!useSimulation)
   { //pull the input in from the real world
     newPosition = myEnc.read();
-    long velocity = (newPosition - oldPosition) / (now-prevSampleTime);
+    float velocity = (newPosition - oldPosition) / (now-prevSampleTime);
     prevSampleTime = now;
+    Serial.println(velocity);
     if (newPosition != oldPosition) {
       oldPosition = newPosition;
       }

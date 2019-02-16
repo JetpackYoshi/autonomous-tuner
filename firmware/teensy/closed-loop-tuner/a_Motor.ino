@@ -1,10 +1,12 @@
 #include <AccelStepper.h>
 
-AccelStepper stepper(4, 7, 8, 9, 10);
+#define speedLimit 300
+
+AccelStepper stepper(4, 2, 3, 4, 5);
 float stepperSpeed;
 
 void motorSetup(){
-  stepper.setMaxSpeed(300);
+  stepper.setMaxSpeed(speedLimit);
 }
 
 void runStepper(){
