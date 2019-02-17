@@ -57,13 +57,15 @@ void detectPitch(){
     note = notefreq1.read();
     prob = notefreq1.probability();
     //Serial.printf("Note: %3.2f | Probability: %.2f\n", note, prob);
-    
+
+    //tuneString();
     if (note>FREQ_TARGET-50 && note <FREQ_TARGET+50){
       Serial.printf("%3.2f\n", note);
       noInterrupts();
       stepperSpeed = map(note, FREQ_TARGET-focusBand, FREQ_TARGET+focusBand, -speedLimit, speedLimit);
       interrupts();
     }
+    
     
   }
 
@@ -74,14 +76,12 @@ void detectPitch(){
 
 void tuneString(){
   if (notefreq1.available()) {
-    if (note>400 && note <500){
+    if (note>FREQ_TARGET-50 && note <FREQ_TARGET+50){
       Serial.printf("%3.2f\n", note);
       noInterrupts();
-      stepperSpeed = map(note, FREQ_TARGET-focusBand, FREQ_TARGET+focusBand, -300, 300);
+      stepperSpeed = map(note, FREQ_TARGET-focusBand, FREQ_TARGET+focusBand, -speedLimit, speedLimit);
       interrupts();
     }
-    if ((millis()-lastSampleTime) > 250){
-      stepperSpeed = 0;
-    }
+    
   }
 }
