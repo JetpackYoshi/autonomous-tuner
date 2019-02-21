@@ -20,6 +20,7 @@ AudioAnalyzeNoteFrequency     notefreq1;
 AudioConnection               patchCord1(adc1,0, notefreq1,0);
 
 long lastSampleTime = 0;
+bool noteAvailable = false;
 
 void setTuningTarget(TuningTargets target){
   switch(target){
@@ -52,36 +53,30 @@ void audioSetup(){
 void detectPitch(){
   //Serial.println("TEST");
   if (notefreq1.available()) {
+    noteAvailable = true;
     
     lastSampleTime = millis();
     note = notefreq1.read();
     prob = notefreq1.probability();
+    Serial.printf("%3.2f\n", note);
     //Serial.printf("Note: %3.2f | Probability: %.2f\n", note, prob);
-
-    //tuneString();
-    if (note>FREQ_TARGET-50 && note <FREQ_TARGET+50){
-      Serial.printf("%3.2f\n", note);
-      noInterrupts();
-      stepperSpeed = map(note, FREQ_TARGET-focusBand, FREQ_TARGET+focusBand, -speedLimit, speedLimit);
-      interrupts();
-    }
     
-    
-  }
-
-  if ((millis()-lastSampleTime) > 250){
-   stepperSpeed = 0;
+  }else{
+    noteAvailable = false;
   }
 }
 
 void tuneString(){
-  if (notefreq1.available()) {
+  if (noteAvailable){
     if (note>FREQ_TARGET-50 && note <FREQ_TARGET+50){
-      Serial.printf("%3.2f\n", note);
       noInterrupts();
       stepperSpeed = map(note, FREQ_TARGET-focusBand, FREQ_TARGET+focusBand, -speedLimit, speedLimit);
       interrupts();
     }
-    
+  }
+  if ((millis()-lastSampleTime) > 100){
+    noInterrupts();
+    stepperSpeed = 0;
+    interrupts();
   }
 }

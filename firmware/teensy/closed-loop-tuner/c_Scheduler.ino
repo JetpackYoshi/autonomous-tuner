@@ -20,5 +20,6 @@ void performPolledRoutines(){
 //  }
   if (PITCH_DETECT_TOGGLE){
     detectPitch();
+    tuneString();
   }
 }
