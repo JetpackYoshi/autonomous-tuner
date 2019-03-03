@@ -70,7 +70,7 @@ void tuneString(){
   if (noteAvailable){
     if (note>FREQ_TARGET-50 && note <FREQ_TARGET+50){
       noInterrupts();
-      stepperSpeed = map(note, FREQ_TARGET-focusBand, FREQ_TARGET+focusBand, -speedLimit, speedLimit);
+      stepperSpeed = map(note, FREQ_TARGET-focusBand, FREQ_TARGET+focusBand, speedLimit, -speedLimit);
       interrupts();
     }
   }
@@ -78,5 +78,31 @@ void tuneString(){
     noInterrupts();
     stepperSpeed = 0;
     interrupts();
+  }
+}
+
+void runStateMachine(){
+  switch(tuningState){
+    case NOT_READY: {
+      break;
+    }
+    case READY:{
+      break;
+    }
+    case TUNING:{
+      tuneString();
+//      if (note>FREQ_TARGET-1.0 && note<FREQ_TARGET+1){
+//        tuningState = DONE;
+//        //cmdMessenger.sendCmd(kAcknowledge, "Done");
+//        noInterrupts();
+//        stepperSpeed = 0;
+//        interrupts();
+//        Serial.println("Done");
+//      }
+      break;
+    }
+    case DONE:{
+      break;
+    }
   }
 }

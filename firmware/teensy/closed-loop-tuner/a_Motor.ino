@@ -1,8 +1,17 @@
 #include <AccelStepper.h>
 
-#define speedLimit 300
+#define speedLimit 500
 
-AccelStepper stepper(4, 2, 3, 4, 5);
+//H-Bridge//
+//AccelStepper stepper(4, 2, 3, 4, 5);
+
+//ULN2003//
+AccelStepper stepper(4, 2, 4, 3, 5);
+//AccelStepper stepper(4, 4, 2, 5, 3);
+
+//MP6500//
+//AccelStepper stepper(1, 2, 3);
+
 float stepperSpeed;
 
 void motorSetup(){

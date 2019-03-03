@@ -11,6 +11,7 @@ void loop() {
   for(int i=0; i<100; i++){
     sum += analogRead(A2);
   }
+  //reading  = analogRead(A2);
   Serial.println(sum/100);
   //delay(200);
 }

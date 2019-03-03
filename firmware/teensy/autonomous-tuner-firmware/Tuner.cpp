@@ -4,7 +4,7 @@
   #include "WProgram.h"
 #endif
 
-#include <Tuner.h>
+#include "Tuner.h"
 
 Tuner::Tuner(float* note, long* lastSampleTime, float* stepperSpeed)
 {
@@ -50,5 +50,24 @@ void Tuner::Compute()
       myStepperSpeed = 0;
       interrupts();
     }
+  }
+}
+
+void Tuner::StateMachineRun()
+{
+  switch(tuningState)
+  {
+    case NOT_READY:
+      break;
+    case READY:
+      break;
+    case TUNING:
+      Compute();
+      if (note>FREQ_TARGET-1.0 && note<FREQ_TARGET+1){
+        tuningState = DONE;
+      }
+      break;
+    case DONE:
+      break;
   }
 }
