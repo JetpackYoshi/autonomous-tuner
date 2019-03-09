@@ -6,7 +6,7 @@
 //AccelStepper stepper(4, 2, 3, 4, 5);
 
 //ULN2003//
-AccelStepper stepper(4, 2, 4, 3, 5);
+AccelStepper stepper(4, 2, 3, 5, 4);
 //AccelStepper stepper(4, 4, 2, 5, 3);
 
 //MP6500//

@@ -2,14 +2,25 @@ enum
 {
   kAcknowledge,
   kSetTargetString,
-  kBeginTuning
+  kBeginTuning,
+  kToggleRawStream
 };
 
 void attachCommandCallbacks()
 {
   cmdMessenger.attach(kSetTargetString, OnSetTargetString);
   cmdMessenger.attach(kBeginTuning, OnBeginTuning);
+  cmdMessenger.attach(kToggleRawStream, toggleRawStream);
   cmdMessenger.printLfCr();
+}
+
+void toggleRawStream(){
+  stream = !stream;
+  if (stream){
+    cmdMessenger.sendCmd(kAcknowledge, "Streaming On");
+  }else{
+    cmdMessenger.sendCmd(kAcknowledge, "Streaming Off");
+  }
 }
 
 void OnBeginTuning(){
