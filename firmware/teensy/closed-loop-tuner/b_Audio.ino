@@ -24,7 +24,7 @@ AudioConnection               patchCord1(adc1,0, notefreq1,0);
 
 long lastSampleTime = 0;
 bool noteAvailable = false;
-bool stream = false;
+bool stream = true;
 
 void setTuningTarget(TuningTargets target){
   switch(target){
@@ -65,6 +65,9 @@ void detectPitch(){
     
     lastSampleTime = millis();
     note = notefreq1.read();
+//    filtered_note = StepFilter(note);
+    
+    
     prob = notefreq1.probability();
 
     // Check Process Status
@@ -74,7 +77,11 @@ void detectPitch(){
         inRangeCounter = 0;
     }
     if (stream){
-      Serial.printf("%3.2f\n", note);
+//      Serial.printf("%3.3f\n", note);
+//      Serial.printf("%3.3f\n", Xe);
+//      serialFloatPrint(voltage);
+//      serialFloatPrint(Xe);
+//      Serial.println();
     }
     //Serial.printf("Note: %3.2f | Probability: %.2f\n", note, prob);
     
@@ -86,7 +93,10 @@ void detectPitch(){
 void tuneString(){
   if (noteAvailable){
     if (note>FREQ_TARGET-FREQ_BAND && note <FREQ_TARGET+FREQ_BAND){
-      Serial.printf("%3.2f\n", note);
+      filtered_note = StepFilter(note);
+      Serial.printf("%3.3f", note);
+      Serial.print(" ");
+      Serial.printf("%3.3f\n", filtered_note);
       noInterrupts();
       stepperSpeed = map(note, FREQ_TARGET-focusBand, FREQ_TARGET+focusBand, -speedLimit, speedLimit);
       interrupts();

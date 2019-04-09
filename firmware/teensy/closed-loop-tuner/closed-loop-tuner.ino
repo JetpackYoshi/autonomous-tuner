@@ -15,6 +15,7 @@ enum TuningStates{
 #define kSerialSpeed 115200
 
 float note;
+float filtered_note;
 float prob;
 
 bool RUN = true;
