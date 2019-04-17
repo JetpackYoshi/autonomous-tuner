@@ -1,17 +1,30 @@
 enum
 {
   kAcknowledge,
-  kSetTargetString,
+  kGetPitchData,
+  kSetTarget,
   kBeginTuning,
+  kStopTuning,
+  kCalibrate,
   kToggleRawStream
 };
 
 void attachCommandCallbacks()
 {
-  cmdMessenger.attach(kSetTargetString, OnSetTargetString);
+  cmdMessenger.attach(kGetPitchData, OnGetPitchData);
+  cmdMessenger.attach(kSetTarget, OnSetTarget);
   cmdMessenger.attach(kBeginTuning, OnBeginTuning);
+  cmdMessenger.attach(kStopTuning, OnStopTuning);
+  cmdMessenger.attach(kCalibrate, OnCalibrate);
   cmdMessenger.attach(kToggleRawStream, toggleRawStream);
   cmdMessenger.printLfCr();
+}
+
+void OnGetPitchData(){
+  cmdMessenger.sendCmdStart(kAcknowledge);
+  cmdMessenger.sendCmdArg(FREQ_TARGET);
+  cmdMessenger.sendCmdArg(filtered_note);
+  cmdMessenger.sendCmdEnd();
 }
 
 void toggleRawStream(){
@@ -28,7 +41,16 @@ void OnBeginTuning(){
   cmdMessenger.sendCmd(kAcknowledge, "Tuning Start");
 }
 
-void OnSetTargetString()
+void OnStopTuning(){
+  tuningState = READY;
+  stopMotor();
+}
+
+void OnCalibrate(){
+  // Calibrate Stuff
+}
+
+void OnSetTarget()
 {
   String target = cmdMessenger.readStringArg();
 
@@ -50,6 +72,9 @@ void OnSetTargetString()
   }else{
     cmdMessenger.sendCmd(kAcknowledge, "Unknown String");
   }
-      
-  
+}
+
+void OnSetTarget2(){
+  FREQ_TARGET = cmdMessenger.readFloatArg();
+  FREQ_BAND = cmdMessenger.readFloatArg();
 }

@@ -18,6 +18,8 @@ float note;
 float filtered_note;
 float prob;
 
+int Error = 0;
+
 bool RUN = true;
 
 void setup() {
@@ -25,10 +27,7 @@ void setup() {
   motorSetup();
   scheduleRoutines();
   attachCommandCallbacks();
-
-  
   Serial.begin(kSerialSpeed);
-  Serial.println("Begin Tuning A");
 }
 
 void loop() {

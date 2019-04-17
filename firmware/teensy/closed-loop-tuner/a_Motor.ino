@@ -23,3 +23,9 @@ void runStepper(){
 //  stepper.setSpeed(-Output);
   stepper.runSpeed();
 }
+
+void stopMotor(){
+  noInterrupts();
+  stepperSpeed = 0;
+  interrupts();
+}
