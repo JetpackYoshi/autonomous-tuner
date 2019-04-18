@@ -1,6 +1,7 @@
 enum
 {
   kAcknowledge,
+  kGetStatus,
   kGetPitchData,
   kSetTarget,
   kBeginTuning,
@@ -11,6 +12,7 @@ enum
 
 void attachCommandCallbacks()
 {
+  cmdMessenger.attach(kGetStatus, OnGetStatus);
   cmdMessenger.attach(kGetPitchData, OnGetPitchData);
   cmdMessenger.attach(kSetTarget, OnSetTarget);
   cmdMessenger.attach(kBeginTuning, OnBeginTuning);
@@ -18,6 +20,13 @@ void attachCommandCallbacks()
   cmdMessenger.attach(kCalibrate, OnCalibrate);
   cmdMessenger.attach(kToggleRawStream, toggleRawStream);
   cmdMessenger.printLfCr();
+}
+
+void OnGetStatus(){
+  cmdMessenger.sendCmdStart(kAcknowledge);
+  cmdMessenger.sendCmdArg(tuningState);
+  cmdMessenger.sendCmdArg(Error);
+  cmdMessenger.sendCmdEnd();
 }
 
 void OnGetPitchData(){
