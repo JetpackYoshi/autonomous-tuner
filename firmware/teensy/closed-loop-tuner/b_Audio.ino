@@ -9,7 +9,7 @@
 TuningTargets tuningTarget = STRING_D4;
 
 double Setpoint, Input, Output;
-double p_Kp=2, p_Ki=5, p_Kd=1;
+double p_Kp=300, p_Ki=0, p_Kd=0;
 PID tuningPID(&Input, &Output, &Setpoint, p_Kp, p_Ki, p_Kd, DIRECT);
 
 float FREQ_TARGET;
@@ -24,7 +24,7 @@ AudioConnection               patchCord1(adc1,0, notefreq1,0);
 
 long lastSampleTime = 0;
 bool noteAvailable = false;
-bool stream = false;
+bool stream = true;
 
 void setTuningTarget(TuningTargets target){
   switch(target){
@@ -49,6 +49,7 @@ void setTuningTarget(TuningTargets target){
       break;
     }
   }
+  Setpoint = FREQ_TARGET;
 }
 
 void audioSetup(){
@@ -65,16 +66,18 @@ void detectPitch(){
     
     lastSampleTime = millis();
     note = notefreq1.read();
+//    filtered_note = StepFilter(note);
+    
+    
     prob = notefreq1.probability();
 
-    // Check Process Status
-    if (note>FREQ_TARGET-0.5 && note<FREQ_TARGET+0.5){
-        inRangeCounter = inRangeCounter + 1;
-    }else{
-        inRangeCounter = 0;
-    }
+    
     if (stream){
-      Serial.printf("%3.2f\n", note);
+//      Serial.printf("%3.3f\n", note);
+//      Serial.printf("%3.3f\n", Xe);
+//      serialFloatPrint(voltage);
+//      serialFloatPrint(Xe);
+//      Serial.println();
     }
     //Serial.printf("Note: %3.2f | Probability: %.2f\n", note, prob);
     
@@ -86,9 +89,21 @@ void detectPitch(){
 void tuneString(){
   if (noteAvailable){
     if (note>FREQ_TARGET-FREQ_BAND && note <FREQ_TARGET+FREQ_BAND){
-      Serial.printf("%3.2f\n", note);
+      filtered_note = StepFilter(note);
+      Serial.printf("%3.3f", note);
+      Serial.print(" ");
+      Serial.printf("%3.3f\n", filtered_note);
+      Input = filtered_note;
+      // Check Process Status
+      if (filtered_note>FREQ_TARGET-0.5 && filtered_note<FREQ_TARGET+0.5){
+          inRangeCounter = inRangeCounter + 1;
+      }else{
+          inRangeCounter = 0;
+      }
       noInterrupts();
-      stepperSpeed = map(note, FREQ_TARGET-focusBand, FREQ_TARGET+focusBand, -speedLimit, speedLimit);
+//      stepperSpeed = map(filtered_note, FREQ_TARGET-focusBand, FREQ_TARGET+focusBand, -speedLimit, speedLimit);
+      stepperSpeed = -Output;
+//      Serial.printf("%3.3f\n", -Output);
       interrupts();
     }
   }
@@ -109,9 +124,9 @@ void runStateMachine(){
     }
     case TUNING:{
       tuneString();
-      //Serial.println(inRangeCounter);
       if (inRangeCounter > MaxConsecValid){
         tuningState = DONE;
+        inRangeCounter = 0;
         //cmdMessenger.sendCmd(kAcknowledge, "Done");
         noInterrupts();
         stepperSpeed = 0;

@@ -18,6 +18,7 @@ void performPolledRoutines(){
 //  if ((lcdMetro.check() == 1) && LCD_REFRESH_TOGGLE){
 //    null; //do stuff
 //  }
+  tuningPID.Compute();
   if (PITCH_DETECT_TOGGLE){
     detectPitch();
     //tuneString();
