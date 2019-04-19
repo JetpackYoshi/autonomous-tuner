@@ -5,26 +5,29 @@
 //#define NOTE_D4 293.7
 //#define NOTE_G3 196.0
 
-//enum TuningTargets{STRING_G3, STRING_D4, STRING_A4, STRING_E5};
 TuningTargets tuningTarget = STRING_D4;
 
 double Setpoint, Input, Output;
 double p_Kp=300, p_Ki=0, p_Kd=0;
 PID tuningPID(&Input, &Output, &Setpoint, p_Kp, p_Ki, p_Kd, DIRECT);
 
-float FREQ_TARGET;
-float FREQ_BAND = 50;
+float FREQ_TARGET; // Current setpoint pitch
+float FREQ_BAND = 50; // Defines detection window. Target Pitch +/= FREQ_BAND
 float focusBand = 3;
-int inRangeCounter = 0;
-#define MaxConsecValid 20
+float validBand = 0.5;
 
-AudioInputAnalog              adc1; //adc(A2);
+int inRangeCounter = 0; // Counts the number of times the measured pitch is in acceptable range
+#define MaxConsecValid 20
+int tuningFaultCounter = 0; // Increments if motor moves but pitch doesn't change
+#define MaxTuningFault 20
+
+AudioInputAnalog              adc1;
 AudioAnalyzeNoteFrequency     notefreq1;
 AudioConnection               patchCord1(adc1,0, notefreq1,0);
 
 long lastSampleTime = 0;
 bool noteAvailable = false;
-bool stream = true;
+bool stream = false;
 
 void setTuningTarget(TuningTargets target){
   switch(target){
@@ -60,26 +63,15 @@ void audioSetup(){
   setTuningTarget(STRING_E5);
 }
 void detectPitch(){
-  //Serial.println("TEST");
   if (notefreq1.available()) {
     noteAvailable = true;
     
     lastSampleTime = millis();
     note = notefreq1.read();
-//    filtered_note = StepFilter(note);
     
     
     prob = notefreq1.probability();
 
-    
-    if (stream){
-//      Serial.printf("%3.3f\n", note);
-//      Serial.printf("%3.3f\n", Xe);
-//      serialFloatPrint(voltage);
-//      serialFloatPrint(Xe);
-//      Serial.println();
-    }
-    //Serial.printf("Note: %3.2f | Probability: %.2f\n", note, prob);
     
   }else{
     noteAvailable = false;
@@ -90,19 +82,22 @@ void tuneString(){
   if (noteAvailable){
     if (note>FREQ_TARGET-FREQ_BAND && note <FREQ_TARGET+FREQ_BAND){
       filtered_note = StepFilter(note);
-      Serial.printf("%3.3f", note);
-      Serial.print(" ");
-      Serial.printf("%3.3f\n", filtered_note);
-      Input = filtered_note;
+      if (stream){
+        Serial.printf("%3.3f", note);
+        Serial.print(" ");
+        Serial.printf("%3.3f\n", filtered_note);
+      }
+      Input = filtered_note; // Pass measured value to PID
+      
       // Check Process Status
-      if (filtered_note>FREQ_TARGET-0.5 && filtered_note<FREQ_TARGET+0.5){
+      if (filtered_note>FREQ_TARGET-validBand && filtered_note<FREQ_TARGET+validBand){
           inRangeCounter = inRangeCounter + 1;
       }else{
           inRangeCounter = 0;
       }
       noInterrupts();
-//      stepperSpeed = map(filtered_note, FREQ_TARGET-focusBand, FREQ_TARGET+focusBand, -speedLimit, speedLimit);
-      stepperSpeed = -Output;
+      stepperSpeed = map(filtered_note, FREQ_TARGET-focusBand, FREQ_TARGET+focusBand, -speedLimit, speedLimit);
+//      stepperSpeed = -Output; // Use PID Controller
 //      Serial.printf("%3.3f\n", -Output);
       interrupts();
     }
@@ -115,7 +110,7 @@ void tuneString(){
 }
 
 void runStateMachine(){
-  switch(tuningState){
+  switch(systemState){
     case NOT_READY: {
       break;
     }
@@ -125,13 +120,13 @@ void runStateMachine(){
     case TUNING:{
       tuneString();
       if (inRangeCounter > MaxConsecValid){
-        tuningState = DONE;
+        systemState = DONE;
         inRangeCounter = 0;
-        //cmdMessenger.sendCmd(kAcknowledge, "Done");
         noInterrupts();
         stepperSpeed = 0;
         interrupts();
         Serial.println("Done");
+//        cmdMessenger.sendCmd(kAcknowledge, "Done");
       }
       break;
     }
