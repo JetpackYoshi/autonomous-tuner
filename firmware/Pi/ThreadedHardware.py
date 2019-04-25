@@ -3,8 +3,9 @@ import PyCmdMessenger
 from Queue import Queue
 
 
-arduino = PyCmdMessenger.ArduinoBoard("COM25",baud_rate=115200)
+arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyACM0",baud_rate=115200)
 
+"""
 commands = [["ReqSettings",""],
             ["RcvSettings","ii"],
             ["Sync","i"],
@@ -16,6 +17,18 @@ commands = [["ReqSettings",""],
             ["AckPlotD","iii"],
             ["TuneDone","ii"],
             ["Error","s"]]
+"""
+commands = [["GetStat",""],
+            ["RcvStat","si"],
+            ["GetPitch",""],
+            ["RcvPitch","siii"],
+            ["SetPitch","ii"],
+            ["InitTune",""],
+            ["AckTune","sii"],
+            ["StopTune",""],
+            ["AckStop","sii"],
+            ["Calibrate","ii"],
+            ["AckCal","siii"]]
 
 c = PyCmdMessenger.CmdMessenger(arduino, commands)
 
