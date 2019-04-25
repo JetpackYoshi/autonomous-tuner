@@ -1,15 +1,19 @@
 enum
 {
-  kAcknowledge,
-  kGetStatus,
-  kGetPitchData,
-  kSetTarget,
-  kBeginTuning,
-  kStopTuning,
-  kCalibrate,
-  kToggleRawStream
+  kAcknowledge,    // 0   
+  kGetStatus,      // 1
+  kGetPitchData,   // 2
+  kSetTarget,      // 3
+  kBeginTuning,    // 4
+  kStopTuning,     // 5
+  kCalibrate,      // 6
+  kToggleRawStream // 7
 };
 
+void sendHeader(){
+  cmdMessenger.sendCmdArg(systemState);
+  cmdMessenger.sendCmdArg(Error);
+}
 void attachCommandCallbacks()
 {
   cmdMessenger.attach(kGetStatus, OnGetStatus);
@@ -23,35 +27,53 @@ void attachCommandCallbacks()
 }
 
 void OnGetStatus(){
+  // Returns the System State and Error
   cmdMessenger.sendCmdStart(kAcknowledge);
-  cmdMessenger.sendCmdArg(tuningState);
-  cmdMessenger.sendCmdArg(Error);
+  sendHeader();
   cmdMessenger.sendCmdEnd();
 }
 
 void OnGetPitchData(){
+  // Returns the setpoint pitch and the measured pitch
   cmdMessenger.sendCmdStart(kAcknowledge);
+  sendHeader();
   cmdMessenger.sendCmdArg(FREQ_TARGET);
   cmdMessenger.sendCmdArg(filtered_note);
   cmdMessenger.sendCmdEnd();
 }
 
 void toggleRawStream(){
+  // Toggles telemetry stream on and off
   stream = !stream;
   if (stream){
-    cmdMessenger.sendCmd(kAcknowledge, "Streaming On");
+    cmdMessenger.sendCmdStart(kAcknowledge);
+    sendHeader();
+    cmdMessenger.sendCmdArg("Streaming On");
+    cmdMessenger.sendCmdEnd();
   }else{
-    cmdMessenger.sendCmd(kAcknowledge, "Streaming Off");
+    cmdMessenger.sendCmdStart(kAcknowledge);
+    sendHeader();
+    cmdMessenger.sendCmdArg("Streaming Off");
+    cmdMessenger.sendCmdEnd();
   }
 }
 
 void OnBeginTuning(){
-  tuningState = TUNING;
-  cmdMessenger.sendCmd(kAcknowledge, "Tuning Start");
+  // Activate motor and start live tuning process
+  systemState = TUNING;
+  cmdMessenger.sendCmdStart(kAcknowledge);
+  sendHeader();
+  cmdMessenger.sendCmdArg("Tuning Start");
+  cmdMessenger.sendCmdEnd();
 }
 
 void OnStopTuning(){
-  tuningState = READY;
+  // Stops the tuning process. Halts motor and returns system to READY state
+  cmdMessenger.sendCmdStart(kAcknowledge);
+  sendHeader();
+  cmdMessenger.sendCmdArg("Stopped Tuning");
+  cmdMessenger.sendCmdEnd();
+  systemState = READY;
   stopMotor();
 }
 
@@ -60,30 +82,48 @@ void OnCalibrate(){
 }
 
 void OnSetTarget()
+  // Set the tuning profile via the letter of the note
 {
   String target = cmdMessenger.readStringArg();
 
   if (target == "E"){
-    cmdMessenger.sendCmd(kAcknowledge, "Target: E String");
+    cmdMessenger.sendCmdStart(kAcknowledge);
+    sendHeader();
+    cmdMessenger.sendCmdArg("Target: E String");
+    cmdMessenger.sendCmdEnd();
     setTuningTarget(STRING_E5);
   }
   else if(target == "A"){
-    cmdMessenger.sendCmd(kAcknowledge, "Target: A String");
+    cmdMessenger.sendCmdStart(kAcknowledge);
+    sendHeader();
+    cmdMessenger.sendCmdArg("Target: A String");
+    cmdMessenger.sendCmdEnd();
     setTuningTarget(STRING_A4);
   }
   else if(target == "D"){
-    cmdMessenger.sendCmd(kAcknowledge, "Target: D String");
+    cmdMessenger.sendCmdStart(kAcknowledge);
+    sendHeader();
+    cmdMessenger.sendCmdArg("Target: D String");
+    cmdMessenger.sendCmdEnd();
     setTuningTarget(STRING_D4);
   }
   else if(target == "G"){
-    cmdMessenger.sendCmd(kAcknowledge, "Target: G String");
+    cmdMessenger.sendCmdStart(kAcknowledge);
+    sendHeader();
+    cmdMessenger.sendCmdArg("Target: G String");
+    cmdMessenger.sendCmdEnd();
     setTuningTarget(STRING_G3);
   }else{
-    cmdMessenger.sendCmd(kAcknowledge, "Unknown String");
+    cmdMessenger.sendCmdStart(kAcknowledge);
+    sendHeader();
+    cmdMessenger.sendCmdArg("Unknown String");
+    cmdMessenger.sendCmdEnd();
   }
 }
 
 void OnSetTarget2(){
+  // Set the tuning profile via explicit pitch and band values
   FREQ_TARGET = cmdMessenger.readFloatArg();
   FREQ_BAND = cmdMessenger.readFloatArg();
+  Setpoint = FREQ_TARGET;
 }

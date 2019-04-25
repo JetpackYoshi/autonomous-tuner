@@ -5,12 +5,12 @@
 
 CmdMessenger cmdMessenger = CmdMessenger(Serial);
 enum TuningTargets{STRING_G3, STRING_D4, STRING_A4, STRING_E5};
-enum TuningStates{
+enum SystemStates{
       NOT_READY,
       READY,
       TUNING,
       DONE
-    }tuningState;
+    }systemState;
 
 #define kSerialSpeed 115200
 
