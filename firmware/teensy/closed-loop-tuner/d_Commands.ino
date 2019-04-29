@@ -67,6 +67,7 @@ void toggleRawStream(){
 void OnBeginTuning(){
   // Activate motor and start live tuning process
   systemState = TUNING;
+  digitalWrite(enablePin, HIGH);
   cmdMessenger.sendCmdStart(kBeginTuningAck);
   sendHeader();
   cmdMessenger.sendCmdArg("Tuning Start");
