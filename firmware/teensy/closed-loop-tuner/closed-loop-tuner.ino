@@ -3,8 +3,15 @@
 #include <Wire.h>
 #include <CmdMessenger.h>
 
-CmdMessenger cmdMessenger = CmdMessenger(Serial);
+//Hardware Serial//
+#define SERIALPORT Serial1 
+
+//USB Serial//
+//#define SERIALPORT Serial
+
+CmdMessenger cmdMessenger = CmdMessenger(SERIALPORT);
 enum TuningTargets{STRING_G3, STRING_D4, STRING_A4, STRING_E5};
+enum StepSizes{WHOLE,HALF,QUARTER,EIGHTH};
 enum SystemStates{
       NOT_READY,
       READY,
@@ -27,7 +34,7 @@ void setup() {
   motorSetup();
   scheduleRoutines();
   attachCommandCallbacks();
-  Serial.begin(kSerialSpeed);
+  SERIALPORT.begin(kSerialSpeed);
 }
 
 void loop() {

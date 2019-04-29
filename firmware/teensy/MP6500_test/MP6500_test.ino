@@ -17,9 +17,9 @@ int motorSpeed = 100;
 
 void setup() {
   Serial.begin(kSerialSpeed);
-//  pinMode(enablePin, OUTPUT);
-//  pinMode(MS1, OUTPUT);
-//  pinMode(MS2, OUTPUT);
+  pinMode(enablePin, OUTPUT);
+  pinMode(MS1, OUTPUT);
+  pinMode(MS2, OUTPUT);
   attachCommandCallbacks();
   motor.setMaxSpeed(2000);
   motor.setSpeed(100);

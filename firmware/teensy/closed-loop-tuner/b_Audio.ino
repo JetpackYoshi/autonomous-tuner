@@ -83,9 +83,9 @@ void tuneString(){
     if (note>FREQ_TARGET-FREQ_BAND && note <FREQ_TARGET+FREQ_BAND){
       filtered_note = StepFilter(note);
       if (stream){
-        Serial.printf("%3.3f", note);
-        Serial.print(" ");
-        Serial.printf("%3.3f\n", filtered_note);
+        SERIALPORT.printf("%3.3f", note);
+        SERIALPORT.print(" ");
+        SERIALPORT.printf("%3.3f\n", filtered_note);
       }
       Input = filtered_note; // Pass measured value to PID
       
@@ -122,10 +122,8 @@ void runStateMachine(){
       if (inRangeCounter > MaxConsecValid){
         systemState = DONE;
         inRangeCounter = 0;
-        noInterrupts();
-        stepperSpeed = 0;
-        interrupts();
-        Serial.println("Done");
+        stopMotor();
+        SERIALPORT.println("Done");
 //        cmdMessenger.sendCmd(kAcknowledge, "Done");
       }
       break;
