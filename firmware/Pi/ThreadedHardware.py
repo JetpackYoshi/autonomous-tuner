@@ -6,7 +6,7 @@ import digitalio
 import adafruit_character_lcd.character_lcd as characterlcd
 import threading
 import PyCmdMessenger
-import Queue
+import queue
 import RPi.GPIO as GPIO
 
 lcd_columns = 16
@@ -30,7 +30,10 @@ GPIO.setup(5, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(6, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(13, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-
+Up_E = threading.Event()
+Down_E = threading.Event()
+Select_E = threading.Event()
+Back_E = threading.Event()
 
 arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyACM0",baud_rate=115200)
 #arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyACM0",baud_rate=115200)
@@ -61,6 +64,7 @@ class Update(threading.Thread):
         self.freq = Freq
         self.params = Params
         self.back = Back
+        self.msg = []
         
         
     def run(self):
@@ -114,14 +118,14 @@ class LCD(threading.Thread):
 #       self.UpdateF = UpdateF
        self.UpdateScreen = True
        self.Target = 440.0
-       self.tolerance = 0.1
+       self.Tolerance = 0.1
        self.freq = Freq
        
        
     def run(self):   
         lcd_line_1 = "Starting"
         lcd_line_2 = "Threads"
-        lcd.message = lcd_line_1 + lcd_line_2
+        lcd.message = lcd_line_1.ljust(16)  + "\n" + lcd_line_2.ljust(16)
         sleep(1)
         while True:
             if self.MenuNum == 2:
@@ -129,7 +133,7 @@ class LCD(threading.Thread):
                     if not self.freq.empty():
                         lcd_line_1 = "Tuning: " + self.Target
                         lcd_line_2 = (self.freq.get()) + " Hz"
-                        lcd.message = lcd_line_1 + lcd_line_2
+                        lcd.message = lcd_line_1.ljust(16)  + "\n" + lcd_line_2.ljust(16)
                 self.MenuNum = 1
                 self.Back.clear()
                     
@@ -156,7 +160,7 @@ class LCD(threading.Thread):
                     if self.MenuNum == 0:
                         self.MenuNum = 1
                     else:
-                        self.MenuNum == 2
+                        self.MenuNum = 2
                     self.UpdateScreen = True
                     self.Select.clear()    
                     
@@ -168,38 +172,41 @@ class LCD(threading.Thread):
                         
                 if self.UpdateScreen:
                     if self.MenuNum == 0:
-                        lcd_line_1 = self.Menu[(self.Menu1IDX % len(self.Menu))] + "*"
-                        lcd_line_2 = self.Menu[((self.Menu1IDX + 1) % len(self.Menu))]
+                        lcd_line_1 = (self.Menu[(self.Menu1IDX % len(self.Menu))])[0] + "*"
+                        lcd_line_2 = (self.Menu[((self.Menu1IDX + 1) % len(self.Menu))])[0]
                         
                     elif self.MenuNum == 1:
                         self.idx = (self.Menu1IDX % len(self.Menu))
-                        lcd_line_1 = (self.Menu[self.idx])[(self.Menu2IDX % len(self.Menu[self.idx]))] + "*"
-                        lcd_line_2 = (self.Menu[self.idx])[((self.Menu2IDX + 1) % len(self.Menu[self.idx]))]
+                        print(self.Menu[self.idx])
+                        lcd_line_1 = (((self.Menu[self.idx]))[1][(self.Menu2IDX % len(self.Menu[self.idx]))])[0] + "*"
+                        lcd_line_2 = (((self.Menu[self.idx]))[1][((self.Menu2IDX + 1) % len(self.Menu[self.idx]))])[0]
                         
                     else:
                         self.idx2 = (self.Menu2IDX % len(self.Menu[self.idx]))
-                        self.Target = ((self.Menu[self.idx])[self.idx2])[1]
+                        self.Target = (((self.Menu[self.idx]))[1][self.idx2])[1]
                         self.Range = int(round(self.Target * self.Tolerance))
                         self.Params = [self.Target, self.Range]
                         lcd_line_1 = "Tuning..."
                         lcd_line_2 = "Target: "
-                        
-                    lcd.message = lcd_line_1 + lcd_line_2
+                    print(self.idx)
+                    print(self.idx2)
+                    print(lcd_line_1)
+                    print(self.MenuNum)
+                    lcd.message = lcd_line_1.ljust(16) + "\n" + lcd_line_2.ljust(16)
                     self.UpdateScreen = False
             
-# Callbacks
 
 def Up(channel):
-    Up.set()
+    Up_E.set()
     
 def Down(channel):
-    Down.set()
+    Down_E.set()
     
 def Select(channel):
-    Select.set()
+    Select_E.set()
     
 def Back(channel):
-    Back.set()
+    Back_E.set()
     
 
 def main():
@@ -208,10 +215,10 @@ def main():
     
     lcd.message = lcd_line_1 + lcd_line_2
     
-    Up = threading.Event()
-    Down = threading.Event()
-    Select = threading.Event()
-    Back = threading.Event()
+#    Up_E = threading.Event()
+#    Down_E = threading.Event()
+#    Select_E = threading.Event()
+#    Back_E = threading.Event()
     
     Sync = threading.Event()
     Tune = threading.Event()
@@ -219,7 +226,7 @@ def main():
 #    UpdateGUI = threading.Condition()
 #    StateLock = threading.Lock()
     
-    Freq = Queue.Queue()
+    Freq = queue.Queue()
     Params = []
     
     GPIO.add_event_detect(4, GPIO.FALLING, callback=Up, bouncetime=300)
@@ -228,7 +235,7 @@ def main():
     GPIO.add_event_detect(13, GPIO.FALLING, callback=Back, bouncetime=300)
     
     Operate = Update(Sync, Tune, Freq, Params, Back)
-    GUI = LCD(Freq, Up, Down, Select, Back)
+    GUI = LCD(Freq, Up_E, Down_E, Select_E, Back_E)
     Operate.start()
     GUI.start()
     
