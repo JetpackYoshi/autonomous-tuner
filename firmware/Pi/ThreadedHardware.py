@@ -1,127 +1,241 @@
+from subprocess import Popen, PIPE
+from time import sleep
+from datetime import datetime
+import board
+import digitalio
+import adafruit_character_lcd.character_lcd as characterlcd
 import threading
 import PyCmdMessenger
-from Queue import Queue
+import Queue
+import RPi.GPIO as GPIO
+
+lcd_columns = 16
+lcd_rows = 2
+
+lcd_rs = digitalio.DigitalInOut(board.D22)
+lcd_en = digitalio.DigitalInOut(board.D17)
+lcd_d4 = digitalio.DigitalInOut(board.D25)
+lcd_d5 = digitalio.DigitalInOut(board.D24)
+lcd_d6 = digitalio.DigitalInOut(board.D23)
+lcd_d7 = digitalio.DigitalInOut(board.D18)
+
+
+lcd = characterlcd.Character_LCD_Mono(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7, lcd_columns, lcd_rows)
+
+lcd.clear()
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(4, GPIO.IN, pull_up_down=GPIO.PUD_UP)  
+GPIO.setup(5, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(6, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(13, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
 
 
 arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyACM0",baud_rate=115200)
+#arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyACM0",baud_rate=115200)
 
-"""
-commands = [["ReqSettings",""],
-            ["RcvSettings","ii"],
-            ["Sync","i"],
-            ["AckSync","ii"],
-            ["PlotReady",""],
-            ["AckPlotReady","ii"],
-            ["Plot",""],
-            ["AckPlot","ii"],
-            ["AckPlotD","iii"],
-            ["TuneDone","ii"],
-            ["Error","s"]]
-"""
 commands = [["GetStat",""],
             ["RcvStat","si"],
             ["GetPitch",""],
             ["RcvPitch","siii"],
-            ["SetPitch","ii"],
+            ["SetTarget","ii"],
+            ["AckTarget","siii"],
             ["InitTune",""],
-            ["AckTune","sii"],
+            ["AckTune","sis"],
             ["StopTune",""],
-            ["AckStop","sii"],
+            ["AckStop","sis"],
             ["Calibrate","ii"],
-            ["AckCal","siii"]]
+            ["AckCal","siii"],
+            ["Stream",""],
+            ["AckStream","sis"]]
 
 c = PyCmdMessenger.CmdMessenger(arduino, commands)
 
 class Update(threading.Thread):
-    def __init__(self, slock, plock, sync, plot, stats, params, freq, fcond):
+    def __init__(self, Sync, Tune, Freq, Params, Back):
         threading.Thread.__init__(self)
-        self.slock = slock
-        self.plock = plock
-        self.sync = sync
-        self.plot = plot
-        self.stats = stats
-        self.params = params
-        self.freq = freq
-        self.fcond = fcond
-        self.msg = []
+        
+        self.tune = Tune
+        self.sync = Sync
+        self.freq = Freq
+        self.params = Params
+        self.back = Back
         
         
     def run(self):
         while True:
             self.msg = c.receive()
             
-            with self.slock:
-                self.stats = self.msg[1]
+#            with self.slock:
+#                self.state = (self.msg[1])[0]
                 
-            if self.plot.is_set:
-                if self.msg[0] == "RcvSettings":
-                    c.send("PlotReady")
-                elif self.msg[0] == "AckPlotReady":
-                    c.send("Plot")
-                elif self.msg[0] == "AckPlot":
-                    c.send("Plot")
-                elif self.msg[0] == "AckPlotD":
-                    self.fcond.acquire()
-                    self.freq.append((self.msg[1])[2])
-                    self.fcond.notify()
-                    self.fcond.release()
-                    c.send("Plot")
-                elif self.msg[0] == "TuneDone":
-                    self.plot.clear()
+            if self.tune.is_set:
+                if ((self.msg[1])[0]) == "READY":
+                    c.send("InitTune")
+                elif ((self.msg[1])[0]) == "TUNING":
+                    if self.msg[0] == "RcvPitch":
+                        self.freq.put((self.msg[1])[2])
+                    c.send("GetPitch")
+                elif ((self.msg[1])[0]) == "DONE":
+                    self.tune.clear()
                     c.send("ReqSettings")
                     
             elif self.sync.is_set():
-                if self.msg[0] == "RcvSettings":
-                    with self.plock:
-                        c.send("Sync", self.params)
-                elif self.msg[0] == "AckSync":
+                if self.msg[0] == "AckSync":
                     self.sync.clear()
-                    self.plot.set()
-                    c.send("ReqSettings")  
+                    self.tune.set()
+                    c.send("ReqSettings")
+                else:
+                    c.send("Sync", self.params) 
                     
             else:
                 c.send("ReqSettings")
                         
             
-class Plot(threading.Thread):
-    def __init__(self, freq, fcond):
+class LCD(threading.Thread):
+    def __init__(self, Freq, Up, Down, Select, Back):
        threading.Thread.__init__(self)
-       self.freq = freq
-       self.fcond = fcond
-       self.val = []
+       
+       self.Up = Up
+       self.Down = Down
+       self.Select = Select
+       self.Back = Back
+       
+       self.MenuNum = 0
+       self.Menu1IDX = 0
+       self.Menu2IDX = 0
+       self.idx = 0
+       self.idx2 = 0
+       self.Menu =  [("Violin", [("E", 659.3), ("A", 440.0), ("D", 293.7), ("G", 196.0)]),
+                     ("Viola", [("A", 440.0), ("D", 293.7), ("G", 196.0), ("C", 130.8)]),
+                     ("Cello", [("A", 220.0), ("D", 146.8), ("G", 98.0), ("C", 65.41)]),
+                     ("Upright Bass", [("E", 41.2), ("A", 55.0), ("D", 73.4), ("G", 98.0)])]
+#       self.UpdateF = UpdateF
+       self.UpdateScreen = True
+       self.Target = 440.0
+       self.tolerance = 0.1
+       self.freq = Freq
+       
        
     def run(self):   
+        lcd_line_1 = "Starting"
+        lcd_line_2 = "Threads"
+        lcd.message = lcd_line_1 + lcd_line_2
+        sleep(1)
         while True:
-            self.condition.acquire()
-            while True:
-                if self.freq:
-                    self.val = self.freq.pop()
-                    print(self.val)
-                    break
-                self.fcond.wait()
-            self.fcond.release()
+            if self.MenuNum == 2:
+                while not self.Back.is_set():
+                    if not self.freq.empty():
+                        lcd_line_1 = "Tuning: " + self.Target
+                        lcd_line_2 = (self.freq.get()) + " Hz"
+                        lcd.message = lcd_line_1 + lcd_line_2
+                self.MenuNum = 1
+                self.Back.clear()
+                    
+                    
+                
+            else:
+                if self.Up.is_set():
+                    if self.MenuNum == 0:
+                        self.Menu1IDX -= 1
+                    else:
+                        self.Menu2IDX -= 1
+                    self.UpdateScreen = True
+                    self.Up.clear()
+                        
+                if self.Down.is_set():
+                    if self.MenuNum == 0:
+                        self.Menu1IDX += 1
+                    else:
+                        self.Menu2IDX += 1
+                    self.UpdateScreen = True
+                    self.Down.clear()    
+                    
+                if self.Select.is_set():
+                    if self.MenuNum == 0:
+                        self.MenuNum = 1
+                    else:
+                        self.MenuNum == 2
+                    self.UpdateScreen = True
+                    self.Select.clear()    
+                    
+                if self.Back.is_set():
+                    if self.MenuNum == 1:
+                        self.MenuNum = 0
+                    self.UpdateScreen = True
+                    self.Back.clear()
+                        
+                if self.UpdateScreen:
+                    if self.MenuNum == 0:
+                        lcd_line_1 = self.Menu[(self.Menu1IDX % len(self.Menu))] + "*"
+                        lcd_line_2 = self.Menu[((self.Menu1IDX + 1) % len(self.Menu))]
+                        
+                    elif self.MenuNum == 1:
+                        self.idx = (self.Menu1IDX % len(self.Menu))
+                        lcd_line_1 = (self.Menu[self.idx])[(self.Menu2IDX % len(self.Menu[self.idx]))] + "*"
+                        lcd_line_2 = (self.Menu[self.idx])[((self.Menu2IDX + 1) % len(self.Menu[self.idx]))]
+                        
+                    else:
+                        self.idx2 = (self.Menu2IDX % len(self.Menu[self.idx]))
+                        self.Target = ((self.Menu[self.idx])[self.idx2])[1]
+                        self.Range = int(round(self.Target * self.Tolerance))
+                        self.Params = [self.Target, self.Range]
+                        lcd_line_1 = "Tuning..."
+                        lcd_line_2 = "Target: "
+                        
+                    lcd.message = lcd_line_1 + lcd_line_2
+                    self.UpdateScreen = False
             
+# Callbacks
+
+def Up(channel):
+    Up.set()
+    
+def Down(channel):
+    Down.set()
+    
+def Select(channel):
+    Select.set()
+    
+def Back(channel):
+    Back.set()
+    
 
 def main():
-    statlock = threading.Lock()
-    paramlock = threading.Lock()
-    syncparam = threading.Event()
-    plot = threading.Event()
-    freqcond = threading.Condition()
+    lcd_line_1 = "Running"
+    lcd_line_2 = "Program"
     
-    Freq = [] 
-    DevStats = []
-    Parameters = []
+    lcd.message = lcd_line_1 + lcd_line_2
     
-    Operate = Update(statlock, paramlock, syncparam, plot, DevStats, Parameters, Freq, freqcond)
-    Plotter = Plot(Freq, freqcond)
+    Up = threading.Event()
+    Down = threading.Event()
+    Select = threading.Event()
+    Back = threading.Event()
+    
+    Sync = threading.Event()
+    Tune = threading.Event()
+#    UpdateFreq = threading.Condition()
+#    UpdateGUI = threading.Condition()
+#    StateLock = threading.Lock()
+    
+    Freq = Queue.Queue()
+    Params = []
+    
+    GPIO.add_event_detect(4, GPIO.FALLING, callback=Up, bouncetime=300)
+    GPIO.add_event_detect(5, GPIO.FALLING, callback=Down, bouncetime=300)
+    GPIO.add_event_detect(6, GPIO.FALLING, callback=Select, bouncetime=300)
+    GPIO.add_event_detect(13, GPIO.FALLING, callback=Back, bouncetime=300)
+    
+    Operate = Update(Sync, Tune, Freq, Params, Back)
+    GUI = LCD(Freq, Up, Down, Select, Back)
     Operate.start()
-    Plotter.start()
+    GUI.start()
     
     
     
     Operate.join()
-    Plotter.join()
+    GUI.join()
 
 if __name__ == '__main__':
     main()
