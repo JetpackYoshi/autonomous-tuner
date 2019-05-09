@@ -83,7 +83,7 @@ class Update(threading.Thread):
     def run(self):
         c.send("GetStat")
         while True:
-            sleep(1)
+#            sleep(1)
             self.msg = c.receive()
             print(self.msg)
             
@@ -103,7 +103,8 @@ class Update(threading.Thread):
                         print("sent InitTune")
                     elif ((self.msg[1])[0]) == 2:
                         if self.msg[0] == "RcvPitch":
-                            self.freq.put((self.msg[1])[3])
+                            if not self.freq.qsize():
+                                self.freq.put(((self.msg[1])[3]))
                             print((self.msg[1])[2])
                         c.send("GetPitch")
                         print("sent GetPitch")
@@ -150,7 +151,7 @@ class LCD(threading.Thread):
        self.Menu2IDX = 0
        self.idx = 0
        self.idx2 = 0
-       self.Menu =  [("Violin", [("E", 659.3), ("A", 440.0), ("D", 293.7), ("G", 196.0)]),
+       self.Menu =  [("Violin", [("E", 659.3, 80.0), ("A", 440.0, 50.0), ("D", 293.7, 50.0), ("G", 196.0, 50.0)]),
                      ("Viola", [("A", 440.0), ("D", 293.7), ("G", 196.0), ("C", 130.8)]),
                      ("Cello", [("A", 220.0), ("D", 146.8), ("G", 98.0), ("C", 65.41)]),
                      ("Upright Bass", [("E", 41.2), ("A", 55.0), ("D", 73.4), ("G", 98.0)])]
@@ -165,14 +166,15 @@ class LCD(threading.Thread):
         lcd_line_1 = "Starting"
         lcd_line_2 = "Threads"
         lcd.message = lcd_line_1.ljust(16)  + "\n" + lcd_line_2.ljust(16)
-        sleep(1)
+#        sleep(1)
         while True:
             if self.MenuNum == 2:
                 while (not self.Back.is_set()) and (not self.Done.is_set()):
                     if not self.freq.empty():
                         lcd_line_1 = "Tuning: " + str(self.Target)
-                        lcd_line_2 = str(self.freq.get()) + " Hz"
+                        lcd_line_2 = "{:.2f} Hz".format(self.freq.get())
                         lcd.message = lcd_line_1.ljust(16)  + "\n" + lcd_line_2.ljust(16)
+                        print("Update")
                 if self.Back.is_set():
                     self.Stahp.set()
                     self.Back.clear()
@@ -235,9 +237,10 @@ class LCD(threading.Thread):
 #                        print(self.Menu[self.idx])
                         
                     else:
-                        self.idx2 = (self.Menu2IDX % len(self.Menu[self.idx]))
+                        self.idx2 = (self.Menu2IDX % len((self.Menu[self.idx])[1]))
                         self.Target = (((self.Menu[self.idx]))[1][self.idx2])[1]
-                        self.Range = int(round(self.Target * self.Tolerance))
+                        self.Range = (((self.Menu[self.idx]))[1][self.idx2])[2]
+#                        self.Range = 80.0
                         self.Params.put([self.Target, self.Range])
                         lcd_line_1 = "Tuning..."
                         lcd_line_2 = "Target: " + str(self.Target)
