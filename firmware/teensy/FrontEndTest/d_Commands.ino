@@ -17,14 +17,14 @@ enum
 };
 
 void sendHeader(){
-  cmdMessenger.sendCmdArg(systemState);
-  cmdMessenger.sendCmdBinArg(0);
+  cmdMessenger.sendCmdBinArg<int>(systemState);
+  cmdMessenger.sendCmdBinArg(Error);
 }
 void attachCommandCallbacks()
 {
   cmdMessenger.attach(kGetStatus, OnGetStatus);
   cmdMessenger.attach(kGetPitchData, OnGetPitchData);
-  cmdMessenger.attach(kSetTarget, OnSetTarget);
+  cmdMessenger.attach(kSetTarget, OnSetTarget2);
   cmdMessenger.attach(kBeginTuning, OnBeginTuning);
   cmdMessenger.attach(kStopTuning, OnStopTuning);
   cmdMessenger.attach(kCalibrate, OnCalibrate);
@@ -43,10 +43,23 @@ void OnGetPitchData(){
   // Returns the setpoint pitch and the measured pitch
   cmdMessenger.sendCmdStart(kGetPitchDataAck);
   sendHeader();
-  cmdMessenger.sendCmdArg(FREQ_TARGET);
-  cmdMessenger.sendCmdArg(filtered_note);
+  cmdMessenger.sendCmdBinArg<float>(FREQ_TARGET);
+  cmdMessenger.sendCmdBinArg<float>(filtered_note);
   cmdMessenger.sendCmdEnd();
 }
+
+
+//void OnGetPitchData(){
+//  // GARUNTEED DONE TUNING AFTER 1 CYCLE
+//  cmdMessenger.sendCmdStart(kGetPitchDataAck);
+//  cmdMessenger.sendCmdBinArg<int>(systemState);
+//  cmdMessenger.sendCmdBinArg(Error);
+//  cmdMessenger.sendCmdBinArg<float>(FREQ_TARGET);
+//  cmdMessenger.sendCmdBinArg<float>(filtered_note);
+//  cmdMessenger.sendCmdEnd();
+//  systemState = DONE;
+//}
+
 
 void toggleRawStream(){
   // Toggles telemetry stream on and off
@@ -130,13 +143,13 @@ void OnSetTarget()
 
 void OnSetTarget2(){
   // Set the tuning profile via explicit pitch and band values
-  FREQ_TARGET = cmdMessenger.readFloatArg();
-  FREQ_BAND = cmdMessenger.readFloatArg();
+  FREQ_TARGET = cmdMessenger.readBinArg<float>();
+  FREQ_BAND = cmdMessenger.readBinArg<float>();
   Setpoint = FREQ_TARGET;
   
   cmdMessenger.sendCmdStart(kSetTargetAck);
   sendHeader();
-  cmdMessenger.sendCmdArg(FREQ_TARGET);
-  cmdMessenger.sendCmdArg(FREQ_BAND);
+  cmdMessenger.sendCmdBinArg<float>(FREQ_TARGET);
+  cmdMessenger.sendCmdBinArg<float>(FREQ_BAND);
   cmdMessenger.sendCmdEnd();
 }

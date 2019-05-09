@@ -4,10 +4,10 @@
 #include <CmdMessenger.h>
 
 //Hardware Serial//
-#define SERIALPORT Serial 
+//#define SERIALPORT Serial1 
 
 //USB Serial//
-//#define SERIALPORT Serial
+#define SERIALPORT Serial
 
 CmdMessenger cmdMessenger = CmdMessenger(SERIALPORT);
 enum TuningTargets{STRING_G3, STRING_D4, STRING_A4, STRING_E5};
@@ -34,10 +34,8 @@ void setup() {
   motorSetup();
   scheduleRoutines();
   attachCommandCallbacks();
-  systemState = READY;
-  Error = 0;
   SERIALPORT.begin(kSerialSpeed);
-  
+  systemState = READY;
 }
 
 void loop() {
