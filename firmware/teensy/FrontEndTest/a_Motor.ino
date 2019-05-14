@@ -2,18 +2,23 @@
 
 #define speedLimit 500
 
-#define enablePin 4
-#define MS1 22
-#define MS2 23
+//#define enablePin 4
+//#define MS1 22
+//#define MS2 23
+
+#define enablePin 39
+#define MS1 38
+#define MS2 37
 
 //L298N//
 //AccelStepper stepper(4, 2, 3, 4, 5);
 
 //ULN2003//
-AccelStepper stepper(4, 2, 3, 5, 4);
+//AccelStepper stepper(4, 2, 3, 5, 4);
 
 //MP6500//
 //AccelStepper stepper(1, 2, 3);
+AccelStepper stepper(1, 36, 35);
 
 float stepperSpeed;
 

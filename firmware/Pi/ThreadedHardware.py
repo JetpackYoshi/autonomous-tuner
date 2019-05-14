@@ -12,12 +12,19 @@ import RPi.GPIO as GPIO
 lcd_columns = 16
 lcd_rows = 2
 
-lcd_rs = digitalio.DigitalInOut(board.D22)
-lcd_en = digitalio.DigitalInOut(board.D17)
-lcd_d4 = digitalio.DigitalInOut(board.D25)
-lcd_d5 = digitalio.DigitalInOut(board.D24)
-lcd_d6 = digitalio.DigitalInOut(board.D23)
-lcd_d7 = digitalio.DigitalInOut(board.D18)
+#lcd_rs = digitalio.DigitalInOut(board.D22)
+#lcd_en = digitalio.DigitalInOut(board.D17)
+#lcd_d4 = digitalio.DigitalInOut(board.D25)
+#lcd_d5 = digitalio.DigitalInOut(board.D24)
+#lcd_d6 = digitalio.DigitalInOut(board.D23)
+#lcd_d7 = digitalio.DigitalInOut(board.D18)
+
+lcd_rs = digitalio.DigitalInOut(board.D20)
+lcd_en = digitalio.DigitalInOut(board.D16)
+lcd_d4 = digitalio.DigitalInOut(board.D7)
+lcd_d5 = digitalio.DigitalInOut(board.D8)
+lcd_d6 = digitalio.DigitalInOut(board.D25)
+lcd_d7 = digitalio.DigitalInOut(board.D24)
 
 
 lcd = characterlcd.Character_LCD_Mono(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7, lcd_columns, lcd_rows)
@@ -30,10 +37,15 @@ lcd_line_2 = "Program"
 lcd.message = lcd_line_1 + "\n" + lcd_line_2
 
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(4, GPIO.IN, pull_up_down=GPIO.PUD_UP)  
-GPIO.setup(5, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(6, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+#GPIO.setup(4, GPIO.IN, pull_up_down=GPIO.PUD_UP)  
+#GPIO.setup(5, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+#GPIO.setup(6, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+#GPIO.setup(13, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+GPIO.setup(19, GPIO.IN, pull_up_down=GPIO.PUD_UP)  
 GPIO.setup(13, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(6, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(5, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 Up_E = threading.Event()
 Down_E = threading.Event()
@@ -45,8 +57,8 @@ Tune = threading.Event()
 Stahp = threading.Event()
 Done = threading.Event()
 
-arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyACM0",baud_rate=115200,int_bytes=4)
-#arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyACM0",baud_rate=115200)
+arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyAMA0",baud_rate=115200,int_bytes=4)
+#arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyACM0",baud_rate=115200,int_bytes=4)
 
 commands = [["GetStat",""],
             ["RcvStat","ii"],
@@ -287,10 +299,15 @@ def main():
     Freq = queue.Queue()
     Params = queue.Queue()
     
-    GPIO.add_event_detect(4, GPIO.FALLING, callback=Up, bouncetime=300)
-    GPIO.add_event_detect(5, GPIO.FALLING, callback=Down, bouncetime=300)
+#    GPIO.add_event_detect(4, GPIO.FALLING, callback=Up, bouncetime=300)
+#    GPIO.add_event_detect(5, GPIO.FALLING, callback=Down, bouncetime=300)
+#    GPIO.add_event_detect(6, GPIO.FALLING, callback=Select, bouncetime=300)
+#    GPIO.add_event_detect(13, GPIO.FALLING, callback=Back, bouncetime=300)
+    
+    GPIO.add_event_detect(19, GPIO.FALLING, callback=Up, bouncetime=300)
+    GPIO.add_event_detect(13, GPIO.FALLING, callback=Down, bouncetime=300)
     GPIO.add_event_detect(6, GPIO.FALLING, callback=Select, bouncetime=300)
-    GPIO.add_event_detect(13, GPIO.FALLING, callback=Back, bouncetime=300)
+    GPIO.add_event_detect(5, GPIO.FALLING, callback=Back, bouncetime=300)
         
     Operate = Update(Sync, Tune, Freq, Params, Back, Stahp, Done)
     GUI = LCD(Freq, Params, Sync, Up_E, Down_E, Select_E, Back_E, Stahp, Done)

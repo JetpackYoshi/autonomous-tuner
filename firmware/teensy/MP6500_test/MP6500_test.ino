@@ -1,13 +1,13 @@
 #include <AccelStepper.h>
 #include <CmdMessenger.h>
 
-#define enablePin 4
-#define MS1 22
-#define MS2 23
+#define enablePin 39
+#define MS1 38
+#define MS2 37
 
 enum StepSizes{WHOLE,HALF,QUARTER,EIGHTH};
 
-AccelStepper motor(1, 2, 3);
+AccelStepper motor(1, 36, 35);
 //AccelStepper motor(4, 2, 3, 4, 5);
 CmdMessenger cmdMessenger = CmdMessenger(Serial);
 
@@ -23,6 +23,7 @@ void setup() {
   attachCommandCallbacks();
   motor.setMaxSpeed(2000);
   motor.setSpeed(100);
+  setStepSize(QUARTER);
 }
 
 void loop() {
