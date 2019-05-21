@@ -307,8 +307,8 @@ def main():
 #    GPIO.add_event_detect(6, GPIO.FALLING, callback=Select, bouncetime=300)
 #    GPIO.add_event_detect(13, GPIO.FALLING, callback=Back, bouncetime=300)
     
-    GPIO.add_event_detect(19, GPIO.FALLING, callback=Up, bouncetime=300)
-    GPIO.add_event_detect(13, GPIO.FALLING, callback=Down, bouncetime=300)
+    GPIO.add_event_detect(13, GPIO.FALLING, callback=Up, bouncetime=300)
+    GPIO.add_event_detect(19, GPIO.FALLING, callback=Down, bouncetime=300)
     GPIO.add_event_detect(6, GPIO.FALLING, callback=Select, bouncetime=300)
     GPIO.add_event_detect(5, GPIO.FALLING, callback=Back, bouncetime=300)
         
