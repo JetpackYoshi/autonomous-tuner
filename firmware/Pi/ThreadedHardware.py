@@ -1,3 +1,4 @@
+# -*- coding: utf-8- -*-
 from subprocess import Popen, PIPE
 from time import sleep
 from datetime import datetime
@@ -57,8 +58,8 @@ Tune = threading.Event()
 Stahp = threading.Event()
 Done = threading.Event()
 
-arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyAMA0",baud_rate=115200,int_bytes=4)
-#arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyACM0",baud_rate=115200,int_bytes=4)
+#arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyAMA0",baud_rate=9600,int_bytes=4)
+arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyACM0",baud_rate=115200,int_bytes=4)
 
 commands = [["GetStat",""],
             ["RcvStat","ii"],
@@ -93,11 +94,13 @@ class Update(threading.Thread):
         
         
     def run(self):
+        #print("sending")
         c.send("GetStat")
         while True:
 #            sleep(1)
             self.msg = c.receive()
-            print(self.msg)
+            #print("Rcvd: ")
+            #print(self.msg)
             
 #            with self.slock:
 #                self.state = (self.msg[1])[0]
@@ -107,43 +110,43 @@ class Update(threading.Thread):
                     self.tune.clear()
                     self.Stahp.clear()
                     c.send("StopTune")
-                    print("sent StopTune Cancelled")
+                    #print("sent StopTune Cancelled")
                 else:  
                     if ((self.msg[1])[0]) == 1:
-                        print("tune raised")
+                        #print("tune raised")
                         c.send("InitTune")
-                        print("sent InitTune")
+                        #print("sent InitTune")
                     elif ((self.msg[1])[0]) == 2:
                         if self.msg[0] == "RcvPitch":
                             if not self.freq.qsize():
                                 self.freq.put(((self.msg[1])[3]))
-                            print((self.msg[1])[2])
+                            #print((self.msg[1])[2])
                         c.send("GetPitch")
-                        print("sent GetPitch")
+                        #print("sent GetPitch")
                     elif ((self.msg[1])[0]) == 3:
                         self.tune.clear()
                         self.Done.set()
-                        print("done")
+                        #print("done")
                         c.send("StopTune")
-                        print("sent StopTune Done")
+                        #print("sent StopTune Done")
                     
             elif self.sync.is_set():
                 if self.msg[0] == "AckTarget":
                     self.sync.clear()
                     self.tune.set()
                     c.send("GetStat")
-                    print("sent GetStat")
+                    #print("sent GetStat")
                 else:
-                    print("sync raised")
+                    #print("sync raised")
                     self.params = self.Params.get()
-                    print(self.params)
-                    print("sent SetTarget " + str(self.params[0]) + ", " + str(self.params[1]))
+                    #print(self.params)
+                    #print("sent SetTarget " + str(self.params[0]) + ", " + str(self.params[1]))
                     c.send("SetTarget", self.params[0], self.params[1])
 #                    print("sent SetTarget " + self.params)
                     
             else:
                 c.send("GetStat")
-                print("sent GetStat")
+                #print("sent GetStat")
                         
             
 class LCD(threading.Thread):
@@ -186,7 +189,7 @@ class LCD(threading.Thread):
                         lcd_line_1 = "Tuning: " + str(self.Target)
                         lcd_line_2 = "{:.2f} Hz".format(self.freq.get())
                         lcd.message = lcd_line_1.ljust(16)  + "\n" + lcd_line_2.ljust(16)
-                        print("Update")
+                        #print("Update")
                 if self.Back.is_set():
                     self.Stahp.set()
                     self.Back.clear()
@@ -260,8 +263,8 @@ class LCD(threading.Thread):
                         
 #                    print(self.idx)
 #                    print(self.idx2)
-                    print(lcd_line_1)
-                    print(self.MenuNum)
+                    #print(lcd_line_1)
+                    #print(self.MenuNum)
                     lcd.message = lcd_line_1.ljust(16) + "\n" + lcd_line_2.ljust(16)
                     self.UpdateScreen = False
             
