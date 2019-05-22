@@ -58,23 +58,23 @@ Tune = threading.Event()
 Stahp = threading.Event()
 Done = threading.Event()
 
-#arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyAMA0",baud_rate=9600,int_bytes=4)
-arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyACM0",baud_rate=115200,int_bytes=4)
+arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyAMA0",baud_rate=115200,int_bytes=4)
+#arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyACM0",baud_rate=115200,int_bytes=4)
 
 commands = [["GetStat",""],
-            ["RcvStat","ii"],
+            ["RcvStat","ss"],
             ["GetPitch",""],
-            ["RcvPitch","iiff"],
-            ["SetTarget","ff"],
-            ["AckTarget","iiff"],
+            ["RcvPitch","ssss"],
+            ["SetTarget","ss"],
+            ["AckTarget","ssss"],
             ["InitTune",""],
-            ["AckTune","iis"],
+            ["AckTune","sss"],
             ["StopTune",""],
-            ["AckStop","iis"],
-            ["Calibrate","ii"],
-            ["AckCal","iiii"],
+            ["AckStop","sss"],
+            ["Calibrate","ss"],
+            ["AckCal","ssss"],
             ["Stream",""],
-            ["AckStream","iis"]]
+            ["AckStream","sss"]]
 
 c = PyCmdMessenger.CmdMessenger(arduino, commands)
 
@@ -94,13 +94,13 @@ class Update(threading.Thread):
         
         
     def run(self):
-        #print("sending")
+        print("sending")
         c.send("GetStat")
         while True:
 #            sleep(1)
             self.msg = c.receive()
-            #print("Rcvd: ")
-            #print(self.msg)
+            print("Rcvd: ")
+            print(self.msg)
             
 #            with self.slock:
 #                self.state = (self.msg[1])[0]
@@ -110,43 +110,43 @@ class Update(threading.Thread):
                     self.tune.clear()
                     self.Stahp.clear()
                     c.send("StopTune")
-                    #print("sent StopTune Cancelled")
+#                    print("sent StopTune Cancelled")
                 else:  
-                    if ((self.msg[1])[0]) == 1:
-                        #print("tune raised")
+                    if ((self.msg[1])[0]) == '1':
+                        print("tune raised")
                         c.send("InitTune")
-                        #print("sent InitTune")
-                    elif ((self.msg[1])[0]) == 2:
+                        print("sent InitTune")
+                    elif ((self.msg[1])[0]) == '2':
                         if self.msg[0] == "RcvPitch":
                             if not self.freq.qsize():
                                 self.freq.put(((self.msg[1])[3]))
-                            #print((self.msg[1])[2])
+#                            print((self.msg[1])[2] + " " + (self.msg[1])[3])
                         c.send("GetPitch")
-                        #print("sent GetPitch")
-                    elif ((self.msg[1])[0]) == 3:
+#                        print("sent GetPitch")
+                    elif ((self.msg[1])[0]) == '3':
                         self.tune.clear()
                         self.Done.set()
-                        #print("done")
+                        print("done")
                         c.send("StopTune")
-                        #print("sent StopTune Done")
+#                        print("sent StopTune Done")
                     
             elif self.sync.is_set():
                 if self.msg[0] == "AckTarget":
                     self.sync.clear()
                     self.tune.set()
                     c.send("GetStat")
-                    #print("sent GetStat")
+#                    print("sent GetStat")
                 else:
-                    #print("sync raised")
+                    print("sync raised")
                     self.params = self.Params.get()
                     #print(self.params)
-                    #print("sent SetTarget " + str(self.params[0]) + ", " + str(self.params[1]))
-                    c.send("SetTarget", self.params[0], self.params[1])
+                    print("sent SetTarget " + str(self.params[0]) + ", " + str(self.params[1]))
+                    c.send("SetTarget", str(self.params[0]), str(self.params[1]))
 #                    print("sent SetTarget " + self.params)
                     
             else:
                 c.send("GetStat")
-                #print("sent GetStat")
+#                print("sent GetStat")
                         
             
 class LCD(threading.Thread):
@@ -187,7 +187,7 @@ class LCD(threading.Thread):
                 while (not self.Back.is_set()) and (not self.Done.is_set()):
                     if not self.freq.empty():
                         lcd_line_1 = "Tuning: " + str(self.Target)
-                        lcd_line_2 = "{:.2f} Hz".format(self.freq.get())
+                        lcd_line_2 = "{:.6s} Hz".format(self.freq.get())
                         lcd.message = lcd_line_1.ljust(16)  + "\n" + lcd_line_2.ljust(16)
                         #print("Update")
                 if self.Back.is_set():
