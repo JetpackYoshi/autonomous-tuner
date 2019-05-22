@@ -23,6 +23,8 @@ void motorSetup(){
   pinMode(MS1, OUTPUT);
   pinMode(MS2, OUTPUT);
   setStepSize(QUARTER);
+  stopMotor();
+  
 }
 
 void runStepper(){
