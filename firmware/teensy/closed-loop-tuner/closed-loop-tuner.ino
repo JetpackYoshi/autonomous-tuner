@@ -35,6 +35,7 @@ void setup() {
   scheduleRoutines();
   attachCommandCallbacks();
   SERIALPORT.begin(kSerialSpeed);
+  systemState = READY;
 }
 
 void loop() {

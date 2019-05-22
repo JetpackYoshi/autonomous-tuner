@@ -8,7 +8,7 @@
 TuningTargets tuningTarget = STRING_D4;
 
 double Setpoint, Input, Output;
-double p_Kp=300, p_Ki=0, p_Kd=0;
+double p_Kp=300, p_Ki=0, p_Kd=2;
 PID tuningPID(&Input, &Output, &Setpoint, p_Kp, p_Ki, p_Kd, DIRECT);
 
 float FREQ_TARGET; // Current setpoint pitch
@@ -83,7 +83,8 @@ void tuneString(){
     if (note>FREQ_TARGET-FREQ_BAND && note <FREQ_TARGET+FREQ_BAND){
       filtered_note = StepFilter(note);
       if (stream){
-        SERIALPORT.printf("%3.3f", note);
+//        SERIALPORT.printf("%3.3f", note);
+        SERIALPORT.print(millis());
         SERIALPORT.print(" ");
         SERIALPORT.printf("%3.3f\n", filtered_note);
       }
@@ -123,7 +124,7 @@ void runStateMachine(){
         systemState = DONE;
         inRangeCounter = 0;
         stopMotor();
-        SERIALPORT.println("Done");
+//        SERIALPORT.println("Done");
 //        cmdMessenger.sendCmd(kAcknowledge, "Done");
       }
       break;

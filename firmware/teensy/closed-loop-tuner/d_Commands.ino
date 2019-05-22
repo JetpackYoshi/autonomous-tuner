@@ -24,7 +24,7 @@ void attachCommandCallbacks()
 {
   cmdMessenger.attach(kGetStatus, OnGetStatus);
   cmdMessenger.attach(kGetPitchData, OnGetPitchData);
-  cmdMessenger.attach(kSetTarget, OnSetTarget);
+  cmdMessenger.attach(kSetTarget, OnSetTarget2);
   cmdMessenger.attach(kBeginTuning, OnBeginTuning);
   cmdMessenger.attach(kStopTuning, OnStopTuning);
   cmdMessenger.attach(kCalibrate, OnCalibrate);
@@ -67,7 +67,7 @@ void toggleRawStream(){
 void OnBeginTuning(){
   // Activate motor and start live tuning process
   systemState = TUNING;
-  digitalWrite(enablePin, HIGH);
+  digitalWrite(enablePin, LOW);
   cmdMessenger.sendCmdStart(kBeginTuningAck);
   sendHeader();
   cmdMessenger.sendCmdArg("Tuning Start");
