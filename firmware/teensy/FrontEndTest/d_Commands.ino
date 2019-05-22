@@ -19,6 +19,8 @@ enum
 void sendHeader(){
   cmdMessenger.sendCmdBinArg<int>(systemState);
   cmdMessenger.sendCmdBinArg(Error);
+//  cmdMessenger.sendCmdArg(systemState);
+//  cmdMessenger.sendCmdArg(Error);
 }
 void attachCommandCallbacks()
 {
@@ -80,7 +82,7 @@ void toggleRawStream(){
 void OnBeginTuning(){
   // Activate motor and start live tuning process
   systemState = TUNING;
-  digitalWrite(enablePin, HIGH);
+  digitalWrite(enablePin, LOW);
   cmdMessenger.sendCmdStart(kBeginTuningAck);
   sendHeader();
   cmdMessenger.sendCmdArg("Tuning Start");

@@ -1,6 +1,6 @@
 #include <AccelStepper.h>
 
-#define speedLimit 500
+#define speedLimit 1000
 
 //#define enablePin 4
 //#define MS1 22
@@ -40,7 +40,7 @@ void stopMotor(){
   noInterrupts();
   stepperSpeed = 0;
   interrupts();
-  digitalWrite(enablePin, LOW);
+  digitalWrite(enablePin, HIGH);
 }
 
 void setStepSize(StepSizes stepSize){

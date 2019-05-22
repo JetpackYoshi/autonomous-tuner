@@ -8,7 +8,7 @@
 TuningTargets tuningTarget = STRING_D4;
 
 double Setpoint, Input, Output;
-double p_Kp=300, p_Ki=0, p_Kd=0;
+double p_Kp=300, p_Ki=0, p_Kd=2;
 PID tuningPID(&Input, &Output, &Setpoint, p_Kp, p_Ki, p_Kd, DIRECT);
 
 float FREQ_TARGET; // Current setpoint pitch
