@@ -10,16 +10,12 @@ import PyCmdMessenger
 import queue
 import RPi.GPIO as GPIO
 
+#Initialize the LCD Display
+#Set the rows and columns of the LCD Display 
 lcd_columns = 16
 lcd_rows = 2
 
-#lcd_rs = digitalio.DigitalInOut(board.D22)
-#lcd_en = digitalio.DigitalInOut(board.D17)
-#lcd_d4 = digitalio.DigitalInOut(board.D25)
-#lcd_d5 = digitalio.DigitalInOut(board.D24)
-#lcd_d6 = digitalio.DigitalInOut(board.D23)
-#lcd_d7 = digitalio.DigitalInOut(board.D18)
-
+#Set the Pi GPIO used for the LCD Display
 lcd_rs = digitalio.DigitalInOut(board.D20)
 lcd_en = digitalio.DigitalInOut(board.D16)
 lcd_d4 = digitalio.DigitalInOut(board.D7)
@@ -27,27 +23,25 @@ lcd_d5 = digitalio.DigitalInOut(board.D8)
 lcd_d6 = digitalio.DigitalInOut(board.D25)
 lcd_d7 = digitalio.DigitalInOut(board.D24)
 
-
+#Create the LCD object for manipulation of the screen
 lcd = characterlcd.Character_LCD_Mono(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7, lcd_columns, lcd_rows)
 
+#Clear screen and write startup diplay
 lcd.clear()
-
 lcd_line_1 = "Initializing "
 lcd_line_2 = "Program"
 
+#Display startup status
 lcd.message = lcd_line_1 + "\n" + lcd_line_2
 
+#Declare GPIO used for physical buttons as Pull Up
 GPIO.setmode(GPIO.BCM)
-#GPIO.setup(4, GPIO.IN, pull_up_down=GPIO.PUD_UP)  
-#GPIO.setup(5, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-#GPIO.setup(6, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-#GPIO.setup(13, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
 GPIO.setup(19, GPIO.IN, pull_up_down=GPIO.PUD_UP)  
 GPIO.setup(13, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(6, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(5, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
+#Create threading events for bottons and thread communication
 Up_E = threading.Event()
 Down_E = threading.Event()
 Select_E = threading.Event()
@@ -58,9 +52,10 @@ Tune = threading.Event()
 Stahp = threading.Event()
 Done = threading.Event()
 
+#Create PyCmdMessenger object to setup Teensy
 arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyAMA0",baud_rate=115200,int_bytes=4)
-#arduino = PyCmdMessenger.ArduinoBoard("/dev/ttyACM0",baud_rate=115200,int_bytes=4)
 
+#Define enumerated list of commannds (must match Teensy's)
 commands = [["GetStat",""],
             ["RcvStat","ss"],
             ["GetPitch",""],
@@ -76,9 +71,12 @@ commands = [["GetStat",""],
             ["Stream",""],
             ["AckStream","sss"]]
 
+#Create PyCmdMessenger object to communicate with the Teensy
 c = PyCmdMessenger.CmdMessenger(arduino, commands)
 
+#Threaded object for constantly synchronizing states and sending commands to Teensy
 class Update(threading.Thread):
+	#Initialize all class variables and events used
     def __init__(self, Sync, Tune, Freq, Params, Back, Stahp, Done):
         threading.Thread.__init__(self)
         
@@ -92,61 +90,70 @@ class Update(threading.Thread):
         self.Done = Done
         self.msg = []
         
-        
+	
     def run(self):
-        print("sending")
+		
+        #Send initial request status command 
         c.send("GetStat")
+		#Start thread loop
         while True:
-#            sleep(1)
             self.msg = c.receive()
+			#Display Teensy's response
             print("Rcvd: ")
             print(self.msg)
-            
-#            with self.slock:
-#                self.state = (self.msg[1])[0]
-                
+			
+			#Check if state is in "tune"
             if self.tune.is_set():
+				#Check if user cancelled the tuning
                 if self.Stahp.is_set():
-                    self.tune.clear()
-                    self.Stahp.clear()
+                    self.tune.clear() #Clear "tune" state
+                    self.Stahp.clear() #Clear "cancel" event
                     c.send("StopTune")
-#                    print("sent StopTune Cancelled")
+					#print("sent StopTune Cancelled")
+					
                 else:  
+					#Check if Teensy started to tune
                     if ((self.msg[1])[0]) == '1':
                         print("tune raised")
-                        c.send("InitTune")
+                        c.send("InitTune")#If not, initialize Tune on Teensy
                         print("sent InitTune")
+						
                     elif ((self.msg[1])[0]) == '2':
+						#Check if Teensy is sending pitch
                         if self.msg[0] == "RcvPitch":
+							#If so, store in frequency queue if it's empty
                             if not self.freq.qsize():
                                 self.freq.put(((self.msg[1])[3]))
-#                            print((self.msg[1])[2] + " " + (self.msg[1])[3])
                         c.send("GetPitch")
-#                        print("sent GetPitch")
+						#print("sent GetPitch")
+						
+					#Check if the Teensy reports "done" state
                     elif ((self.msg[1])[0]) == '3':
-                        self.tune.clear()
-                        self.Done.set()
+                        self.tune.clear() #Clear "tune" state
+                        self.Done.set() #Set Done event
                         print("done")
                         c.send("StopTune")
 #                        print("sent StopTune Done")
-                    
+			#Check if user initiated tune
             elif self.sync.is_set():
+				#If sync successful fully start the "tune" state
                 if self.msg[0] == "AckTarget":
                     self.sync.clear()
                     self.tune.set()
                     c.send("GetStat")
 #                    print("sent GetStat")
+
+				#Fully synchronize the target string frequency as well as range that user selected
                 else:
                     print("sync raised")
-                    self.params = self.Params.get()
-                    #print(self.params)
+                    self.params = self.Params.get() #Get string settings from parameters queue
                     print("sent SetTarget " + str(self.params[0]) + ", " + str(self.params[1]))
                     c.send("SetTarget", str(self.params[0]), str(self.params[1]))
-#                    print("sent SetTarget " + self.params)
+					#print("sent SetTarget " + self.params)
                     
             else:
                 c.send("GetStat")
-#                print("sent GetStat")
+				#print("sent GetStat")
                         
             
 class LCD(threading.Thread):
@@ -287,25 +294,8 @@ def Back(channel):
     
 
 def main():
-    
-#    Up_E = threading.Event()
-#    Down_E = threading.Event()
-#    Select_E = threading.Event()
-#    Back_E = threading.Event()
-    
-#    Sync = threading.Event()
-#    Tune = threading.Event()
-#    UpdateFreq = threading.Condition()
-#    UpdateGUI = threading.Condition()
-#    StateLock = threading.Lock()   
-
     Freq = queue.Queue()
     Params = queue.Queue()
-    
-#    GPIO.add_event_detect(4, GPIO.FALLING, callback=Up, bouncetime=300)
-#    GPIO.add_event_detect(5, GPIO.FALLING, callback=Down, bouncetime=300)
-#    GPIO.add_event_detect(6, GPIO.FALLING, callback=Select, bouncetime=300)
-#    GPIO.add_event_detect(13, GPIO.FALLING, callback=Back, bouncetime=300)
     
     GPIO.add_event_detect(13, GPIO.FALLING, callback=Up, bouncetime=300)
     GPIO.add_event_detect(19, GPIO.FALLING, callback=Down, bouncetime=300)
@@ -316,8 +306,6 @@ def main():
     GUI = LCD(Freq, Params, Sync, Up_E, Down_E, Select_E, Back_E, Stahp, Done)
     Operate.start()
     GUI.start()
-    
-    
     
     Operate.join()
     GUI.join()
