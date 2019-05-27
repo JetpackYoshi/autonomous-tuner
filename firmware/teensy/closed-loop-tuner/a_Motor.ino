@@ -6,12 +6,6 @@
 #define MS1 38
 #define MS2 37
 
-//L298N//
-//AccelStepper stepper(4, 2, 3, 4, 5);
-
-//ULN2003//
-//AccelStepper stepper(4, 2, 3, 5, 4);
-
 //MP6500//
 AccelStepper stepper(1, 36, 35);
 
@@ -34,6 +28,7 @@ void runStepper(){
 }
 
 void stopMotor(){
+  // Set motor speed to zero and disable motor driver
   noInterrupts();
   stepperSpeed = 0;
   interrupts();
@@ -41,6 +36,19 @@ void stopMotor(){
 }
 
 void setStepSize(StepSizes stepSize){
+  // Sets the step size of the MP6500 Motor Driver
+  
+  // *MS1* | *MS2* | *Microstep Resolution*
+  // ------|-------------------------------
+  //  Low  |  Low  |  Full step
+  // ------|-------|-----------------------
+  //  High |  Low  |  Half (1/2) step
+  // ------|-------|-----------------------
+  //  Low  |  High |  Quarter (1/4) step
+  // ------|-------|-----------------------
+  //  High |  High |  Eighth (1/8) step
+  // --------------------------------------
+  
   switch(stepSize){
     case WHOLE: {
       digitalWrite(MS1, LOW);

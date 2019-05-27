@@ -1,9 +1,4 @@
 #include <PID_v1.h>
-//#include "myEnums.h"
-//#define NOTE_E5 659.3
-//#define NOTE_A4 440.0
-//#define NOTE_D4 293.7
-//#define NOTE_G3 196.0
 
 TuningTargets tuningTarget = STRING_D4;
 
@@ -68,11 +63,8 @@ void detectPitch(){
     
     lastSampleTime = millis();
     note = notefreq1.read();
-    
-    
     prob = notefreq1.probability();
 
-    
   }else{
     noteAvailable = false;
   }
@@ -99,7 +91,6 @@ void tuneString(){
       noInterrupts();
       stepperSpeed = map(filtered_note, FREQ_TARGET-focusBand, FREQ_TARGET+focusBand, -speedLimit, speedLimit);
 //      stepperSpeed = -Output; // Use PID Controller
-//      Serial.printf("%3.3f\n", -Output);
       interrupts();
     }
   }
@@ -124,8 +115,6 @@ void runStateMachine(){
         systemState = DONE;
         inRangeCounter = 0;
         stopMotor();
-//        SERIALPORT.println("Done");
-//        cmdMessenger.sendCmd(kAcknowledge, "Done");
       }
       break;
     }

@@ -85,11 +85,11 @@ void OnStopTuning(){
 }
 
 void OnCalibrate(){
-  // Calibrate Stuff
+  // Calibrate Stuff [UNIMPLEMENTED]
 }
 
 void OnSetTarget()
-  // Set the tuning profile via the letter of the note
+  // Set the tuning profile via the letter of the note (Easier for debugging)
 {
   String target = cmdMessenger.readStringArg();
 
